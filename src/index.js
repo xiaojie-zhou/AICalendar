@@ -8,14 +8,14 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
         <App/>
-        <script>
-        $(document).ready(function () {
-            function refresh(){
-            var iframe = document.getElementById('GCal');
-            iframe.src = iframe.src;}}
-        </script>
-    </React.StrictMode>
+        {/*<script>*/}
+        {/*    $(document).ready(function () {*/}
+        {/*    setInterval(function refresh() {*/}
+        {/*        document.getElementById('GCal').src = document.getElementById('GCal').src+''*/}
+        {/*    }, 10000)}*/}
+        {/*</script>*/}
 
+    </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function
