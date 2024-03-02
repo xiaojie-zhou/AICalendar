@@ -49,9 +49,9 @@ function ChatGPT() {
 
     return (
         <div>
-            <div className="chat-box">
+            <div className="chat-box" style={{maxHeight:'20vh',overflowX:'hidden', overflowY:'scroll'}}>
                 {messages.map((msg, idx) => (
-                    <p key={idx} className={msg.sender}>
+                    <p key={idx} className={'chat_'+msg.sender}>
                         {msg.text}
                     </p>
                 ))}

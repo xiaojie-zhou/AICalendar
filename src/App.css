@@ -36,3 +36,10 @@
     transform: rotate(360deg);
   }
 }
+
+.chat_ai {
+  text-align: left;
+}
+.chat_user {
+  text-align: right;
+}
