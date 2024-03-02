@@ -4,7 +4,7 @@ import OpenAI from "openai";
 
 function ChatGPT() {
     const [input, setInput] = useState('');
-    const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState([{sender:'ai', text: 'How can I help you?'}]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -36,8 +36,21 @@ function ChatGPT() {
                 model: 'gpt-4-0125-preview',
                 messages: message_list
             });
+            let text = response.choices[0].message.content
 
-            const aiMessage = {sender:'ai', text: response.choices[0].message.content};
+            let next_sentence=''
+            if (text === "S")
+                next_sentence = "This is a simple event.";
+            else if (text === "F")
+                next_sentence = "This is a floating event.";
+            else if (text === "T")
+                next_sentence = "This is a task.";
+            else if (text === "N")
+                next_sentence = "I don't understand.";
+            else
+                next_sentence = text
+
+            const aiMessage = {sender:'ai', text: next_sentence};
             setMessages(messages => [...messages, aiMessage]);
         } catch (error) {
             console.error('Error calling OpenAI:', error);
