@@ -3,7 +3,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
-key = os.getenv('OPENAI_API')
+key = os.getenv('OPENAI_API_KEY')
 client = OpenAI(api_key=key)
 
 message_list = [

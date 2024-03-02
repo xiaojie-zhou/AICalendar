@@ -1,5 +1,6 @@
 import './App.css';
 import React from "react";
+import ChatGPT from "./ChatGPT";
 
 function App() {
     return (
@@ -9,7 +10,7 @@ function App() {
               title="GCal"
               id='GCal'
               style={{border: 'none'}}
-              src="https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=America%2FLos_Angeles&bgcolor=%23ffffff&showTitle=0&src=MG9mcW0xMTZuYTc0djBuNWJicDNqMmpla2tAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&src=aHQzamxmYWFjNWxmZDYyNjN1bGZoNHRxbDhAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&color=%230083c6&color=%23B39DDB"
+              src={process.env.REACT_APP_GCal}
               scrolling="no" align='left' loading='eager'>
           </iframe>
 
@@ -24,7 +25,7 @@ function App() {
               </tr>
               <tr>
                   <td height='30%' bgcolor='#add8e6'>
-
+                      <ChatGPT/>
                   </td>
               </tr>
               </tbody>
