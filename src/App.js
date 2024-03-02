@@ -24,7 +24,7 @@ function App() {
                   </td>
               </tr>
               <tr>
-                  <td height='30%' bgcolor='#add8e6'>
+                  <td height='30%' bgcolor='#add8e6' style={{verticalAlign:'bottom'}}>
                       <ChatGPT/>
                   </td>
               </tr>
