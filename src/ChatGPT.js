@@ -1,6 +1,28 @@
 import React, { useState } from 'react';
 
 import OpenAI from "openai";
+import {TodoistApi} from "@doist/todoist-api-typescript";
+
+
+let prompts = [
+    {"role": "system", "content": "The input will be schedules."},
+    {"role": "system", "content": "A simple event is an event that has a specific time and duration."},
+    {"role": "system",
+        "content": "A floating event or a task is an event that has a duration, but has not been assigned to a time yet."},
+    {"role": "system",
+        "content": "A task is an event that has a specific deadline, has a required time to complete, and can be broken up into segments."},
+    {"role": "system",
+        "content": "Your mission is to identify whether the user's input is a simple event, a floating event, a task, or something else."},
+    {"role": "system", "content": "If the user inputs a simple event, say S."},
+    {"role": "system", "content": "If the user inputs a floating event or a task, ask them if it can be interrupted."},
+    {"role": "system",
+        "content": "If the user replies no after asking them if it can be interrupted, it's a floating event, say F, and do your mission from the start."},
+    {"role": "system",
+        "content": "If the user replies yes after asking them if it can be interrupted, it's a task, say T, and reset."},
+    {"role": "system", "content": "If the user inputs something else, like not a schedule, say N."}
+]
+
+let message_list = []
 
 function ChatGPT() {
     const [input, setInput] = useState('');
@@ -14,23 +36,7 @@ function ChatGPT() {
         const client = new OpenAI({apiKey:process.env.REACT_APP_OPENAI_API_KEY, dangerouslyAllowBrowser: true});
 
         try {
-            let message_list = [
-                {"role": "system", "content": "The input will be schedules."},
-                {"role": "system", "content": "A simple event is an event that has a specific time and duration."},
-                {"role": "system",
-                 "content": "A floating event or a task is an event that has a duration, but has not been assigned to a time yet."},
-                {"role": "system",
-                 "content": "A task is an event that has a specific deadline, has a required time to complete, and can be broken up into segments."},
-                {"role": "system",
-                 "content": "Your mission is to identify whether the user's input is a simple event, a floating event, a task, or something else."},
-                {"role": "system", "content": "If the user inputs a simple event, say S."},
-                {"role": "system", "content": "If the user inputs a floating event or a task, ask them if it's interruptible."},
-                {"role": "system",
-                 "content": "If the user replys no after asking them if it's interruptible, it's a floating event, say F, and do your mission from the start."},
-                {"role": "system",
-                 "content": "If the user replys yes after asking them if it's interruptible, it's a task, say T, and reset."},
-                {"role": "system", "content": "If the user inputs something else, like not a schedule, say N."}
-            ]
+            message_list.push(...prompts)
             message_list.push({"role": "user", "content": input})
             const response = await client.chat.completions.create({
                 model: 'gpt-4-0125-preview',
@@ -39,18 +45,32 @@ function ChatGPT() {
             let text = response.choices[0].message.content
 
             let next_sentence=''
-            if (text === "S")
+            if (text === "S") {
                 next_sentence = "This is a simple event.";
-            else if (text === "F")
+
+                const todoist = new TodoistApi(process.env.REACT_APP_Todoist);
+                todoist.getProjects()
+                    .then((projects) => console.log(projects))
+                    .catch((error) => console.log(error))
+
+                message_list = [];
+            }
+            else if (text === "F"){
                 next_sentence = "This is a floating event.";
-            else if (text === "T")
+                message_list = [];
+            }
+            else if (text === "T"){
                 next_sentence = "This is a task.";
+                message_list = [];
+            }
+
             else if (text === "N")
                 next_sentence = "I don't understand.";
             else
                 next_sentence = text
 
             const aiMessage = {sender:'ai', text: next_sentence};
+
             setMessages(messages => [...messages, aiMessage]);
         } catch (error) {
             console.error('Error calling OpenAI:', error);
