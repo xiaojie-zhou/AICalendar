@@ -10,7 +10,7 @@ function App() {
               title="GCal"
               id='GCal'
               style={{border: 'none'}}
-              src={process.env.REACT_APP_GCal}
+              src={process.env.REACT_APP_GCAL}
               scrolling="no" align='left' loading='eager'>
           </iframe>
 

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 
 import OpenAI from "openai";
-import {TodoistApi} from "@doist/todoist-api-typescript";
-
+import {TodoistApi} from '@doist/todoist-api-typescript';
 
 let prompts = [
     {"role": "system", "content": "The input will be schedules."},
@@ -48,10 +47,15 @@ function ChatGPT() {
             if (text === "S") {
                 next_sentence = "This is a simple event.";
 
-                const todoist = new TodoistApi(process.env.REACT_APP_Todoist);
-                todoist.getProjects()
-                    .then((projects) => console.log(projects))
+                const token = process.env.REACT_APP_TODOIST
+                const todoist = new TodoistApi(token);
+                let project_id ='2203598416'
+
+                todoist.addTask({ content: "Buy Milk", projectId: project_id })
+                    .then((task) => console.log(task))
                     .catch((error) => console.log(error))
+
+
 
                 message_list = [];
             }
@@ -73,7 +77,7 @@ function ChatGPT() {
 
             setMessages(messages => [...messages, aiMessage]);
         } catch (error) {
-            console.error('Error calling OpenAI:', error);
+            console.error('Error:', error);
             setMessages(messages => [...messages, { text: 'Error getting response.', sender: 'ai' }]);
         }
 
