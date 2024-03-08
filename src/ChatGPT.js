@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 
 import OpenAI from "openai";
-import {TodoistApi} from '@doist/todoist-api-typescript';
+import {simpletask} from "./todoistapi.js";
+
+
 
 let prompts = [
     {"role": "system", "content": "The input will be schedules."},
@@ -46,17 +48,7 @@ function ChatGPT() {
             let next_sentence=''
             if (text === "S") {
                 next_sentence = "This is a simple event.";
-
-                const token = process.env.REACT_APP_TODOIST
-                const todoist = new TodoistApi(token);
-                let project_id ='2203598416'
-
-                todoist.addTask({ content: "Buy Milk", projectId: project_id })
-                    .then((task) => console.log(task))
-                    .catch((error) => console.log(error))
-
-
-
+                simpletask("name", 'time')
                 message_list = [];
             }
             else if (text === "F"){

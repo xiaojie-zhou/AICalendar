@@ -1,6 +1,6 @@
 import './App.css';
 import React from "react";
-import ChatGPT from "./ChatGPT";
+import ChatGPT from "./ChatGPT.js";
 
 function App() {
     return (

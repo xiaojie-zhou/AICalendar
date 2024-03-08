@@ -2,6 +2,7 @@
   "name": "aicalendar",
   "version": "0.1.0",
   "private": true,
+
   "dependencies": {
     "@doist/todoist-api-typescript": "^3.0.2",
     "@testing-library/jest-dom": "^5.17.0",
@@ -18,9 +19,9 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -43,6 +44,7 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
+    "customize-cra": "^1.0.0",
     "dotenv": "^16.4.5",
     "react-app-rewired": "^2.2.1"
   }
