@@ -47,8 +47,16 @@ function ChatGPT() {
 
             let next_sentence=''
             if (text === "S") {
-                next_sentence = "This is a simple event.";
-                simpletask("name", 'time')
+                //TODO: retrieve content and time from user input
+
+                let success = simpletask("name", '4pm')
+
+                if (success){
+                    next_sentence = "Event Added.";
+                }
+                else{
+                    next_sentence = "Something went wrong. Check console.";
+                }
                 message_list = [];
             }
             else if (text === "F"){
