@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 
 import OpenAI from "openai";
 import {simpletask} from "./todoistapi.js";
+import {floatingtask} from "./todoistapi.js";
 
 
 const prompts = [
@@ -81,7 +82,31 @@ const FT_message_list = [
     {"role": "system", "content": "The input will be schedules."},
     {
         "role": "system",
-        "content": "Ask them if it can be interrupted, and check the total duration of the event if not mentioned."
+        "content": "Extract the Title, the Date (if mentioned. make sure to mention if it's repetitve), and the Duartion (if mentioned) of the event."
+    },
+    {
+        "role": "system",
+        "content": "For example, if the input is 'I have to do the laundry this Tuesday, and it takes 2 hours', output '{\"content\": \"Laundry\", \"description\": \"N/A\", \"day\": \"this Tuesday\", \"duration\": \"120\"}'"
+    },
+    {
+        "role": "system",
+        "content": "If the input lack some of the information, insert N/A, For example, if the input is 'I have to do homework for Calculus class on 3/16, output '{\"content\": \"Homework\", \"description\": \"Calculus class\", \"day\": \"2024-03-16\", \"duration\": \"N/A\"}'"
+    },
+    {
+        "role": "system",
+        "content": "The description label stands for any detailed information that user input, if there's no, insert N/A."
+    },
+    {
+        "role": "system",
+        "content": "The day label stands for either date and day, if both are provided, insert the date with the format 2024-MM-DD."
+    },
+    {
+        "role": "system",
+        "content": "If the user input something like next Monday, this Tueday, etc., just insert next Monday, this Tueday, etc. If which week is not specify, the default is this week."
+    },
+    {
+        "role": "system",
+        "content": "The duration label should be set in minutes. For example, 2 hours = 120, 3 hours = 180."
     }
 ]
 
@@ -102,11 +127,12 @@ const FT_message_list1 = [
     }
 ]
 
-let message_list = []
+let stored_list = []
 
 function ChatGPT() {
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState([{sender: 'ai', text: 'How can I help you?'}]);
+    let message_list = []
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -116,10 +142,10 @@ function ChatGPT() {
         const client = new OpenAI({apiKey: process.env.REACT_APP_OPENAI_API_KEY, dangerouslyAllowBrowser: true});
         try {
             message_list.push(...prompts)
-            message_list.push({"role": "user", "content": input})
+            stored_list.push({"role": "user", "content": input})
             const response = await client.chat.completions.create({
                 model: 'gpt-4-0125-preview',
-                messages: message_list
+                messages: message_list.concat(stored_list)
             });
             let text = response.choices[0].message.content
 
@@ -127,11 +153,11 @@ function ChatGPT() {
             if (text === "S") {
                 //TODO: retrieve content and time from user input
                 let message_s = []
-                message_s.push(...S_message_list)
-                message_s.push({"role": "user", "content": input})
+                //message_s.push(...S_message_list)
+                //message_s.push({"role": "user", "content": input})
                 const response = await client.chat.completions.create({
                     model: 'gpt-4-0125-preview',
-                    messages: message_s
+                    messages: S_message_list.concat(stored_list)
                 });
 
                 let data_str = response.choices[0].message.content
@@ -165,12 +191,47 @@ function ChatGPT() {
                 else
                     next_sentence = "Something went wrong. Check console.";
                 message_list = [];
+                stored_list = [];
             } else if (text === "F") {
-                next_sentence = "This is a floating event.";
+                stored_list.pop();
+                const response = await client.chat.completions.create({
+                    model: 'gpt-4-0125-preview',
+                    messages: FT_message_list.concat(stored_list)
+                });
+
+                let data_str = response.choices[0].message.content
+                let content = '';
+                let description = '';
+                let duestring = '';
+                let duration = 60;
+                let duration_unit = 'minute';
+                try {
+                    let data = JSON.parse(data_str)
+                    content = data['content'];
+                    if (data['description'] !== 'N/A') {
+                        description = data['description'];
+                    }
+                    if (data['day'] !== 'N/A') {
+                        duestring = data['day'];
+                    }
+                    if (data['duration'] !== 'N/A') {
+                        duration = parseInt(data['duration']);
+                    }
+                    console.log(JSON.stringify(data));
+                } catch (e) {
+                    console.log(e)
+                }
+                let success = floatingtask(content, description, duestring, duration, duration_unit)
+                if (success === true)
+                    next_sentence = "Event Added.";
+                else
+                    next_sentence = "Something went wrong. Check console.";
                 message_list = [];
+                stored_list = [];
             } else if (text === "T") {
                 next_sentence = "This is a task.";
                 message_list = [];
+                stored_list = [];
             } else if (text === "N")
                 next_sentence = "I don't understand.";
             else
