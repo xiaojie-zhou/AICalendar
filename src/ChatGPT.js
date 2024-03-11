@@ -41,7 +41,39 @@ const S_message_list = [
     },
     {
         "role": "system",
-        "content": "Like if the input is 'I have a class every monday and wednesday 2-4pm', output '{\"content\": \"Class\", \"time\": \"2pm for 2 hours Every Monday and Wednesday\"}'"
+        "content": "For example, if the input is 'I have a class every monday and wednesday 2-4pm', output '{\"content\": \"Class\", \"description\": \"N/A\", \"day\": \"Monday, Wednesday\", \"time\": \"2pm\", \"duration\": \"120\"}'"
+    },
+    {
+        "role": "system",
+        "content": "If the input lack some of the information, insert N/A, For example, if the input is 'I have a class on 3/16 at 1pm with Prof. Nicki', output '{\"content\": \"Class\", \"description\": \"Prof. Nicki\", \"day\": \"2024-03-16\", \"time\": \"1pm\", \"duration\": \"N/A\"}'"
+    },
+    {
+        "role": "system",
+        "content": "The description label stands for any detailed information that user input, if there's no, insert N/A."
+    },
+    {
+        "role": "system",
+        "content": "The day label stands for either date and day, if both are provided, insert the date with the format 2024-MM-DD."
+    },
+    {
+        "role": "system",
+        "content": "If the task is repetitive, specify every in the day label. For example, every Monday. If a specific date is provided, just insert the date."
+    },
+    {
+        "role": "system",
+        "content": "Repetitive: every monday, etc. Non-repetitive: this Monday, next Monday, etc."
+    },
+    {
+        "role": "system",
+        "content": "If the user input something like next Monday, this Tueday, etc., just insert next Monday, this Tueday, etc. If which week is not specify, the default is this week."
+    },
+    {
+        "role": "system",
+        "content": "If am and pm is not specified, the default values are 12pm, 1pm, 2pm, 3pm, 4pm, 5pm, 6pm, 7pm, 8pm, 9am, 10am, and 11am."
+    },
+    {
+        "role": "system",
+        "content": "The duration label should be set in minutes. For example, 2 hours = 120, 3 hours = 180."
     }
 ]
 
@@ -82,7 +114,6 @@ function ChatGPT() {
         setMessages([...messages, userMessage]);
 
         const client = new OpenAI({apiKey: process.env.REACT_APP_OPENAI_API_KEY, dangerouslyAllowBrowser: true});
-
         try {
             message_list.push(...prompts)
             message_list.push({"role": "user", "content": input})
@@ -105,18 +136,30 @@ function ChatGPT() {
 
                 let data_str = response.choices[0].message.content
                 let content = '';
+                let description = '';
                 let duestring = '';
+                let duration = 60;
+                let duration_unit = 'minute';
                 try {
                     let data = JSON.parse(data_str)
                     content = data['content'];
-                    if (data['time'] !== '') {
-                        duestring = data['time'];
+                    if (data['description'] !== 'N/A') {
+                        description = data['description'];
                     }
+                    if (data['day'] !== 'N/A') {
+                        duestring = data['day'];
+                    }
+                    if (data['time'] !== 'N/A') {
+                        duestring = duestring.concat(' ', data['time']);
+                    }
+                    if (data['duration'] !== 'N/A') {
+                        duration = parseInt(data['duration']);
+                    }
+                    console.log(JSON.stringify(data));
                 } catch (e) {
                     console.log(e)
                 }
-
-                let success = simpletask(content, duestring)
+                let success = simpletask(content, description, duestring, duration, duration_unit)
                 if (success === true)
                     next_sentence = "Event Added.";
                 else
