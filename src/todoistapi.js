@@ -144,21 +144,12 @@ export async function floatingtask(content, description_, duestring, duration_, 
 export async function tasks(content, description_, duestring, duration_, duration_unit) {
     let assigned_time = "9am";
     try{
-        const today = new Date();
-        const difference = Math.floor((Date.parse(duestring) - today) / (1000*60*60*24)) + 1;
-        const dailyduration = Math.ceil(duration_/60/difference);
-
-        let date_cur = new Date();
-        date_cur.setDate(today.getDate()+1)
-        let date_cur_str = date_cur.toISOString().slice(0, 10);
-        console.log(date_cur_str);
-
         let task = await todoist.addTask({
             content: content,
             description: description_,
-            dueString: date_cur_str.concat(" ", assigned_time),
+            dueString: duestring.concat(" ", assigned_time),
             dueLang: 'en',
-            duration: dailyduration*60,
+            duration: duration_,
             durationUnit: duration_unit
         })
 
@@ -169,7 +160,14 @@ export async function tasks(content, description_, duestring, duration_, duratio
         let arr = new Array(24).fill(0);
         let task_map = {};
 
+        const today = new Date();
+        const difference = Math.floor((Date.parse(date) - today) / (1000*60*60*24)) + 1;
+        let dailyduration = Math.ceil(duration_/60/difference);
 
+        let date_cur = new Date();
+        date_cur.setDate(today.getDate()+1)
+        let date_cur_str = date_cur.toISOString().slice(0, 10);
+        console.log(date_cur_str);
 
         if (window.localStorage.getItem("task_map") !== null)
             task_map = JSON.parse(window.localStorage.getItem("task_map"));
@@ -214,13 +212,16 @@ export async function tasks(content, description_, duestring, duration_, duratio
             //console.log("checkpoint1");
             if (start_time !== 24) {
                 assigned_time = start_time.toString();
-
+                console.log(dailyduration)
                 let new_task = await todoist.updateTask(id, {
-                    dueString: date_cur_str.concat(" at ", assigned_time)
+                    dueString: date_cur_str.concat(" at ", assigned_time),
+                    duration: dailyduration*60,
+                    durationUnit: duration_unit
                 })
                 let date_nxt = new Date();
                 date_nxt.setDate(date_cur.getDate()+1);
                 duration = duration - dailyduration;
+                dailyduration = Math.min(duration, dailyduration);
                 let success = await subtask(content, description_, date_nxt, dailyduration*60, duration_unit, duration*60)
                 if (success === 'Cannot'){
                     await todoist.deleteTask(id);
@@ -247,8 +248,10 @@ export async function tasks(content, description_, duestring, duration_, duratio
             for (let i = time; i < time + dailyduration; i++) {
                 arr[i] = 1;
             }
-            let new_task = await todoist.updateTask(id, {
+            await todoist.updateTask(id, {
                 dueString: date_cur_str.concat(" at ", assigned_time),
+                duration: dailyduration*60,
+                durationUnit: duration_unit
             })
             let date_nxt = new Date();
             date_nxt.setDate(date_cur.getDate()+1);
@@ -276,17 +279,12 @@ export async function subtask(content, description_, date_cur, duration_, durati
     let assigned_time = "9am";
     try{
         console.log(duration_)
-        console.log(total_duration)
         if (!duration_){
             return 'Success'
         }
         let date_cur_str = date_cur.toISOString().slice(0, 10);
-        console.log(date_cur);
         let date_nxt = new Date();
         date_nxt.setDate(date_cur.getDate()+1);
-        console.log(date_nxt);
-        let date_nxt_str = date_nxt.toISOString().slice(0, 10);
-        console.log(date_nxt);
         let task = await todoist.addTask({
             content: content,
             description: description_,
