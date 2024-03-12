@@ -3,6 +3,7 @@ import React, {useState} from 'react';
 import OpenAI from "openai";
 import {simpletask} from "./todoistapi.js";
 import {floatingtask} from "./todoistapi.js";
+import {tasks} from "./todoistapi.js";
 
 
 const prompts = [
@@ -231,7 +232,41 @@ function ChatGPT() {
                 message_list = [];
                 stored_list = [];
             } else if (text === "T") {
-                next_sentence = "This is a task.";
+                stored_list.pop();
+                const response = await client.chat.completions.create({
+                    model: 'gpt-4-0125-preview',
+                    messages: FT_message_list.concat(stored_list)
+                });
+
+                let data_str = response.choices[0].message.content
+                let content = '';
+                let description = '';
+                let duestring = '';
+                let duration = 60;
+                let duration_unit = 'minute';
+                try {
+                    let data = JSON.parse(data_str)
+                    content = data['content'];
+                    if (data['description'] !== 'N/A') {
+                        description = data['description'];
+                    }
+                    if (data['day'] !== 'N/A') {
+                        duestring = data['day'];
+                    }
+                    if (data['duration'] !== 'N/A') {
+                        duration = parseInt(data['duration']);
+                    }
+                    console.log(JSON.stringify(data));
+                } catch (e) {
+                    console.log(e)
+                }
+                let success = await tasks(content, description, duestring, duration, duration_unit)
+                if (success === 'Error')
+                    next_sentence = "Something went wrong. Check console.";
+                else if (success === 'Cannot')
+                    next_sentence = "Cannot Add the Event.";
+                else
+                    next_sentence = "Task Is Added";
                 message_list = [];
                 stored_list = [];
             } else if (text === "N")
