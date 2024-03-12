@@ -185,7 +185,7 @@ function ChatGPT() {
                 } catch (e) {
                     console.log(e)
                 }
-                let success = simpletask(content, description, duestring, duration, duration_unit)
+                let success = await simpletask(content, description, duestring, duration, duration_unit)
                 if (success === true)
                     next_sentence = "Event Added.";
                 else
@@ -221,11 +221,13 @@ function ChatGPT() {
                 } catch (e) {
                     console.log(e)
                 }
-                let success = floatingtask(content, description, duestring, duration, duration_unit)
-                if (success === true)
-                    next_sentence = "Event Added.";
-                else
+                let success = await floatingtask(content, description, duestring, duration, duration_unit)
+                if (success === 'Error')
                     next_sentence = "Something went wrong. Check console.";
+                else if (success === 'Cannot')
+                    next_sentence = "Cannot Add the Event.";
+                else
+                    next_sentence = "Event Is Added to".concat(" ", success);
                 message_list = [];
                 stored_list = [];
             } else if (text === "T") {
@@ -240,6 +242,7 @@ function ChatGPT() {
             const aiMessage = {sender: 'ai', text: next_sentence};
 
             setMessages(messages => [...messages, aiMessage]);
+            //window.location.reload();
         } catch (error) {
             console.error('Error:', error);
             setMessages(messages => [...messages, {text: 'Error getting response.', sender: 'ai'}]);
@@ -247,7 +250,7 @@ function ChatGPT() {
 
         setInput('');
     };
-
+    
     return (
         <div>
             <div className="chat-box" style={{maxHeight: '20vh', overflowX: 'hidden', overflowY: 'scroll'}}>
