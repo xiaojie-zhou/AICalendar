@@ -13,11 +13,15 @@ const prompts = [
     {"role": "system", "content": "A simple event is an event that has a specific time and duration."},
     {
         "role": "system",
-        "content": "A floating event or a task is an event that has a duration, but has not been assigned to a time yet."
+        "content": "A floating event or a task is an event that has a duration, but has not been assigned to a specific time yet."
     },
     {
         "role": "system",
         "content": "A task is an event that has a specific deadline, has a required time to complete, and can be broken up into segments."
+    },
+    {
+        "role": "system",
+        "content": "If the time is not provided, for example, I want to go to the gym on Wednesday for 2 hour, it is always a floating event or a task."
     },
     {
         "role": "system",
