@@ -34,6 +34,14 @@ export async function simpletask(content, description_, duestring, duration_, du
         window.localStorage.setItem("task_map", JSON.stringify(task_map));
         console.log(task_map[date]);
 
+        let tasks = {};
+        if (window.localStorage.getItem("tasks") !== null)
+            tasks = JSON.parse(window.localStorage.getItem("tasks"));
+        let string = "TaskID: ".concat(task['id']);
+        let string_content = task['content'].concat(" on ", date).concat(" at ", time);
+        tasks[string] = string_content;
+        window.localStorage.setItem("tasks", JSON.stringify(tasks));
+
         return true;
     }
     catch(e){
@@ -398,5 +406,131 @@ export async function subtask(content, description_, date_cur, duration_, durati
     catch(e){
         console.log(e)
         return 'Error';
+    }
+}
+
+export async function deletetask(task_id) {
+    try {
+        console.log(task_id)
+        let task = await todoist.getTask(task_id);
+        let date = task['due']['datetime'].slice(0, 10);
+        let time = parseInt(task['due']['datetime'].slice(11, 13));
+        let duration = task['duration']['amount']/60;
+        let arr = new Array(24).fill(0);
+        let task_map = {};
+
+        if (window.localStorage.getItem("task_map") !== null)
+            task_map = JSON.parse(window.localStorage.getItem("task_map"));
+        else
+            return false;
+
+        if (task_map.hasOwnProperty(date)) {
+            arr = task_map[date];
+        }
+        else
+            return false;
+
+        for (let i = time; i < time + duration; i++) {
+            arr[i] = 0;
+        }
+
+        task_map[date] = arr;
+        window.localStorage.setItem("task_map", JSON.stringify(task_map));
+        console.log(task_map[date]);
+
+        let d_task = await todoist.deleteTask(task_id);
+
+        let tasks = JSON.parse(window.localStorage.getItem("tasks"));
+        let string = "TaskID: ".concat(task_id);
+        delete tasks[string];
+        window.localStorage.setItem("tasks", JSON.stringify(tasks));
+        return true;
+    }
+    catch(e) {
+        console.log(e)
+        return false;
+    }
+}
+
+export async function modtask(task_id, content_, description_, duestring, duration_) {
+    try {
+        console.log(task_id)
+        let task = await todoist.getTask(task_id);
+        let date = task['due']['datetime'].slice(0, 10);
+        let time = parseInt(task['due']['datetime'].slice(11, 13));
+        let duration = task['duration']['amount'];
+        let arr = new Array(24).fill(0);
+        let task_map = {};
+
+        if (window.localStorage.getItem("task_map") !== null)
+            task_map = JSON.parse(window.localStorage.getItem("task_map"));
+        else
+            return false;
+
+        if (task_map.hasOwnProperty(date)) {
+            arr = task_map[date];
+        }
+        else
+            return false;
+
+        let tasks = JSON.parse(window.localStorage.getItem("tasks"));
+        let string = "TaskID: ".concat(task_id);
+        
+        let new_content = task['content'];
+        let new_description = task['description'];
+        let new_duestring = task['due']['string'];
+        let new_duration = duration;
+
+        if (content_.length !== 0)
+            new_content = content_;
+        if (description_.length !== 0)
+            new_description = description_;
+        if (duestring.length !== 0)
+            new_duestring = duestring;
+        if (duration_.length !== 0)
+            new_duration = parseInt(duration_);
+        console.log(new_duration)
+
+        let m_task = await todoist.updateTask(task_id, {
+        content: new_content,
+        description: new_description,
+        dueString: new_duestring,
+        duration: new_duration,
+        durationUnit: 'minute'
+        });
+
+        let new_date = m_task['due']['datetime'].slice(0, 10);
+        let new_time = parseInt(m_task['due']['datetime'].slice(11, 13));
+
+        let string_content = task['content'].concat(" on ", new_date).concat(" at ", new_time);
+        tasks[string] = string_content;
+        window.localStorage.setItem("tasks", JSON.stringify(tasks));
+
+        let duration_hour = duration/60;
+
+        for (let i = time; i < time + duration_hour; i++) {
+            arr[i] = 0;
+        }
+
+        let n_arr = new Array(24).fill(0);
+
+        if (task_map.hasOwnProperty(new_date)) {
+            n_arr = task_map[new_date];
+        }
+        
+        let new_duration_hour = new_duration/60;
+        for (let i = new_time; i < new_time + new_duration_hour; i++) {
+            n_arr[i] = 1;
+        }
+        
+        task_map[new_date] = n_arr;
+        window.localStorage.setItem("task_map", JSON.stringify(task_map));
+        console.log(task_map[new_date]);
+
+        return true;
+    }
+    catch(e) {
+        console.log(e)
+        return false;
     }
 }

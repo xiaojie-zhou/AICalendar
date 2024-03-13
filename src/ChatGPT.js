@@ -4,10 +4,12 @@ import OpenAI from "openai";
 import {simpletask} from "./todoistapi.js";
 import {floatingtask} from "./todoistapi.js";
 import {tasks} from "./todoistapi.js";
+import {deletetask} from "./todoistapi.js";
+import {modtask} from "./todoistapi.js";
 
 
 const prompts = [
-    {"role": "system", "content": "The input will be schedules."},
+    {"role": "system", "content": "The input will be either adding, deleting, or modifying a schedule."},
     {"role": "system", "content": "A simple event is an event that has a specific time and duration."},
     {
         "role": "system",
@@ -31,7 +33,9 @@ const prompts = [
         "role": "system",
         "content": "If the user replies yes after asking them if it can be interrupted, it's a task, say T, and reset."
     },
-    {"role": "system", "content": "If the user inputs something else, like not a schedule, say N."}
+    {"role": "system", "content": "If the user is trying to delete an existing schedule, say D, don't say anything else."},
+    {"role": "system", "content": "If the user is trying to modify an existing schedule, say M, don't say anything else."},
+    {"role": "system", "content": "If the user inputs something else, say N."}
 ]
 
 const S_message_list = [
@@ -128,6 +132,68 @@ const FT_message_list1 = [
     }
 ]
 
+const DM_message_list = [
+    {"role": "system", "content": "These are the existing schedules in JSON format."},
+]
+
+const D_message_list2 = [
+    {
+        "role": "system",
+        "content": "If you find the existing task that the user is trying to delete, output the TaskID only, don't say anything else."
+    },
+    {
+        "role": "system",
+        "content": "If you cannot find the existing task that the user is trying to delete, output N/A."
+    },
+    {
+        "role": "system",
+        "content": "If the time or description the user provided is unclear, just output the most relevant TaskID, or output N/A if there's no most relevant schedule."
+    }
+]
+
+const M_message_list2 = [
+    {
+        "role": "system",
+        "content": "If you find the existing task that the user is trying to modify, output the TaskID and the information that the user wants to modify in the format of '{\"ID\": \"Something\", \"content\": \"Something\", \"description\": \"Something\", \"day\": \"Something\", \"time\": \"Something\", \"duration\": \"Something\"}'."
+    },
+    {
+        "role": "system",
+        "content": "The description label stands for any detailed information that user input, if there's no, insert N/A."
+    },
+    {
+        "role": "system",
+        "content": "The day label stands for either date and day, if both are provided, insert the date with the format 2024-MM-DD."
+    },
+    {
+        "role": "system",
+        "content": "If am and pm is not specified, the default values are 12pm, 1pm, 2pm, 3pm, 4pm, 5pm, 6pm, 7pm, 8pm, 9am, 10am, and 11am."
+    },
+    {
+        "role": "system",
+        "content": "The duration label should be set in minutes. For example, 2 hours = 120, 3 hours = 180."
+    },
+    {
+        "role": "system",
+        "content": "If the user didn't provide information on a specific field, just insert N/A in that field."
+    },
+    {
+        "role": "system",
+        "content": "For example, if the user wants to change a date on 2/20 to 2pm, output '{\"ID\": \"The ID of the schedule\", \"content\": \"Date\", \"description\": \"N/A\", \"day\": \"2024-02-20\", \"time\": \"2pm\", \"duration\": \"N/A\"}'."
+    },
+    {
+        "role": "system",
+        "content": "For example, the user wants to change a meeting on 4/12 to 5pm - 7pm, output '{\"ID\": \"The ID of the schedule\", \"content\": \"Meeting\", \"description\": \"N/A\", \"day\": \"2024-04-12\", \"time\": \"5pm\", \"duration\": \"120\"}'."
+    },
+    {
+        "role": "system",
+        "content": "If you cannot find the existing task that the user is trying to modify, output N/A in the ID field."
+    },
+    {
+        "role": "system",
+        "content": "If the time or description the user provided is unclear, just output the most relevant TaskID in the ID field, or output N/A in the ID field if there's no most relevant schedule."
+    }
+]
+
 let stored_list = []
 
 function ChatGPT() {
@@ -152,16 +218,13 @@ function ChatGPT() {
 
             let next_sentence = ''
             if (text === "S") {
-                //TODO: retrieve content and time from user input
                 let message_s = []
-                //message_s.push(...S_message_list)
-                //message_s.push({"role": "user", "content": input})
                 const response = await client.chat.completions.create({
                     model: 'gpt-4-0125-preview',
                     messages: S_message_list.concat(stored_list)
                 });
 
-                let data_str = response.choices[0].message.content
+                let data_str = response.choices[0].message.content;
                 let content = '';
                 let description = '';
                 let duestring = '';
@@ -200,7 +263,7 @@ function ChatGPT() {
                     messages: FT_message_list.concat(stored_list)
                 });
 
-                let data_str = response.choices[0].message.content
+                let data_str = response.choices[0].message.content;
                 let content = '';
                 let description = '';
                 let duestring = '';
@@ -238,7 +301,7 @@ function ChatGPT() {
                     messages: FT_message_list.concat(stored_list)
                 });
 
-                let data_str = response.choices[0].message.content
+                let data_str = response.choices[0].message.content;
                 let content = '';
                 let description = '';
                 let duestring = '';
@@ -269,9 +332,81 @@ function ChatGPT() {
                     next_sentence = "Task Is Added";
                 message_list = [];
                 stored_list = [];
-            } else if (text === "N")
+            } else if (text === "N") {
                 next_sentence = "I don't understand.";
-            else
+                message_list = [];
+                stored_list = [];
+            } else if (text === "D") {
+                if (window.localStorage.getItem("tasks") !== null) {
+                    let tasks = [];
+                    let tasks_json = window.localStorage.getItem("tasks");
+                    tasks.push({"role": "system", "content": tasks_json})
+                    const response = await client.chat.completions.create({
+                        model: 'gpt-4-0125-preview',
+                        messages: DM_message_list.concat(tasks).concat(D_message_list2).concat(stored_list)
+                    });
+                    let task_id = response.choices[0].message.content;
+                    let success = await deletetask(task_id)
+                    if (success === true)
+                        next_sentence = "Event Deleted.";
+                    else
+                        next_sentence = "Cannot delete the event.";
+                    }
+                else {
+                    next_sentence = "There is no existing events.";
+                }
+                message_list = [];
+                stored_list = [];
+            } else if (text === "M") {
+                if (window.localStorage.getItem("tasks") !== null) {
+                    let tasks = [];
+                    let tasks_json = window.localStorage.getItem("tasks");
+                    tasks.push({"role": "system", "content": tasks_json})
+                    const response = await client.chat.completions.create({
+                        model: 'gpt-4-0125-preview',
+                        messages: DM_message_list.concat(tasks).concat(M_message_list2).concat(stored_list)
+                    });
+
+                    let data_str = response.choices[0].message.content;
+                    let task_id = '';
+                    let content = '';
+                    let description = '';
+                    let duestring = '';
+                    let duration = '';
+                    try {
+                        let data = JSON.parse(data_str)
+                        task_id = data['ID'];
+                        content = data['content'];
+                        if (data['description'] !== 'N/A') {
+                            description = data['description'];
+                        }
+                        if (data['day'] !== 'N/A') {
+                            duestring = data['day'];
+                        }
+                        if (data['time'] !== 'N/A') {
+                            duestring = duestring.concat(' ', data['time']);
+                        }
+                        if (data['duration'] !== 'N/A') {
+                            duration = data['duration'];
+                        }
+                        console.log(JSON.stringify(data));
+                    } catch (e) {
+                        console.log(e)
+                    }
+
+                    if (task_id !== 'N/A') {
+                        let success = await modtask(task_id, content, description, duestring, duration)
+                        if (success === true)
+                            next_sentence = "Event Modified.";
+                        else
+                            next_sentence = "Something went wrong. Check console.";
+                    } else
+                    next_sentence = "Cannot modify the event.";
+                } else 
+                    next_sentence = "There is no existing events.";
+                message_list = [];
+                stored_list = [];
+            } else
                 next_sentence = text
 
             const aiMessage = {sender: 'ai', text: next_sentence};
