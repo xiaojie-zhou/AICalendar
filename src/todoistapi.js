@@ -42,6 +42,7 @@ export async function simpletask(content, description_, duestring, duration_, du
         tasks[string] = string_content;
         window.localStorage.setItem("tasks", JSON.stringify(tasks));
 
+        //window.location.reload()
         return true;
     }
     catch(e){
@@ -127,6 +128,14 @@ export async function floatingtask(content, description_, duestring, duration_, 
 
                 task_map[date] = arr;
                 console.log(task_map[date]);
+
+                let tasks = {};
+                if (window.localStorage.getItem("tasks") !== null)
+                    tasks = JSON.parse(window.localStorage.getItem("tasks"));
+                let string = "TaskID: ".concat(task['id']);
+                let string_content = task['content'].concat(" on ", date).concat(" at ", time);
+                tasks[string] = string_content;
+                window.localStorage.setItem("tasks", JSON.stringify(tasks));
             }
             else {
                 todoist.deleteTask(id);
@@ -139,8 +148,18 @@ export async function floatingtask(content, description_, duestring, duration_, 
             }
             task_map[date] = arr;
             console.log(task_map[date]);
+
+            let tasks = {};
+            if (window.localStorage.getItem("tasks") !== null)
+                tasks = JSON.parse(window.localStorage.getItem("tasks"));
+            let string = "TaskID: ".concat(task['id']);
+            let string_content = task['content'].concat(" on ", date).concat(" at ", time);
+            tasks[string] = string_content;
+            window.localStorage.setItem("tasks", JSON.stringify(tasks));
         }
         window.localStorage.setItem("task_map", JSON.stringify(task_map));
+
+        //window.location.reload()
         return time;
     }
     catch(e){
@@ -246,6 +265,13 @@ export async function tasks(content, description_, duestring, duration_, duratio
 
                 task_map[date_cur_str] = arr;
                 console.log(task_map[date_cur_str]);
+                //let tasks = {};
+                //if (window.localStorage.getItem("tasks") !== null)
+                //    tasks = JSON.parse(window.localStorage.getItem("tasks"));
+                //let string = "TaskID: ".concat(task['id']);
+                //let string_content = task['content'].concat(" on ", date).concat(" at ", time);
+                //tasks[string] = string_content;
+                //window.localStorage.setItem("tasks", JSON.stringify(tasks));
             }
             else {
                 todoist.deleteTask(id);
@@ -271,10 +297,19 @@ export async function tasks(content, description_, duestring, duration_, duratio
             }
             task_map[date_cur_str] = arr;
             console.log(task_map[date_cur_str]);
+            //let tasks = {};
+            //if (window.localStorage.getItem("tasks") !== null)
+            //    tasks = JSON.parse(window.localStorage.getItem("tasks"));
+            //let string = "TaskID: ".concat(task['id']);
+            //let string_content = task['content'].concat(" on ", date).concat(" at ", time);
+            //tasks[string] = string_content;
+            //window.localStorage.setItem("tasks", JSON.stringify(tasks));
         }
 
 
         window.localStorage.setItem("task_map", JSON.stringify(task_map));
+
+        //window.location.reload()
         return 'Success';
     }
     catch(e){
@@ -444,6 +479,8 @@ export async function deletetask(task_id) {
         let string = "TaskID: ".concat(task_id);
         delete tasks[string];
         window.localStorage.setItem("tasks", JSON.stringify(tasks));
+
+        //window.location.reload()
         return true;
     }
     catch(e) {
@@ -527,6 +564,7 @@ export async function modtask(task_id, content_, description_, duestring, durati
         window.localStorage.setItem("task_map", JSON.stringify(task_map));
         console.log(task_map[new_date]);
 
+        //window.location.reload()
         return true;
     }
     catch(e) {
